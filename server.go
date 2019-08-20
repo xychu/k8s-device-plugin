@@ -3,7 +3,7 @@
 package main
 
 import (
-	"fmt"
+	//"fmt"
 	"log"
 	"net"
 	"os"
@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	resourceName           = "nvidia.com/gpu"
-	serverSock             = pluginapi.DevicePluginPath + "nvidia.sock"
+	//resourceName           = "cloudml.ai/gpu"
+	serverSock             = pluginapi.DevicePluginPath + "cloudml.sock"
 	envDisableHealthChecks = "DP_DISABLE_HEALTHCHECKS"
 	allHealthChecks        = "xids"
 )
@@ -151,21 +151,9 @@ func (m *NvidiaDevicePlugin) unhealthy(dev *pluginapi.Device) {
 
 // Allocate which return list of devices.
 func (m *NvidiaDevicePlugin) Allocate(ctx context.Context, reqs *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
-	devs := m.devs
 	responses := pluginapi.AllocateResponse{}
-	for _, req := range reqs.ContainerRequests {
-		response := pluginapi.ContainerAllocateResponse{
-			Envs: map[string]string{
-				"NVIDIA_VISIBLE_DEVICES": strings.Join(req.DevicesIDs, ","),
-			},
-		}
-
-		for _, id := range req.DevicesIDs {
-			if !deviceExists(devs, id) {
-				return nil, fmt.Errorf("invalid allocation request: unknown device: %s", id)
-			}
-		}
-
+	for _ = range reqs.ContainerRequests {
+		response := pluginapi.ContainerAllocateResponse{}
 		responses.ContainerResponses = append(responses.ContainerResponses, &response)
 	}
 
@@ -210,7 +198,7 @@ func (m *NvidiaDevicePlugin) healthcheck() {
 }
 
 // Serve starts the gRPC server and register the device plugin to Kubelet
-func (m *NvidiaDevicePlugin) Serve() error {
+func (m *NvidiaDevicePlugin) Serve(resourceName string) error {
 	err := m.Start()
 	if err != nil {
 		log.Printf("Could not start device plugin: %s", err)

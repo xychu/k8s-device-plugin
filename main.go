@@ -3,6 +3,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 	"syscall"
@@ -12,7 +13,13 @@ import (
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 )
 
+var (
+	resourceName = flag.String("resource-name", "cloudml.ai/gpu", "The resource name that current device plugin provides")
+)
+
 func main() {
+	flag.Parse()
+
 	log.Println("Loading NVML")
 	if err := nvml.Init(); err != nil {
 		log.Printf("Failed to initialize NVML: %s.", err)
@@ -52,7 +59,7 @@ L:
 			}
 
 			devicePlugin = NewNvidiaDevicePlugin()
-			if err := devicePlugin.Serve(); err != nil {
+			if err := devicePlugin.Serve(*resourceName); err != nil {
 				log.Println("Could not contact Kubelet, retrying. Did you enable the device plugin feature gate?")
 				log.Printf("You can check the prerequisites at: https://github.com/NVIDIA/k8s-device-plugin#prerequisites")
 				log.Printf("You can learn how to set the runtime at: https://github.com/NVIDIA/k8s-device-plugin#quick-start")
